@@ -12,7 +12,7 @@ print(os.getcwd())
 
 # setup (later automate)
 day = "THU"
-week = 8
+week = 12
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -89,6 +89,8 @@ df = df.rename(columns={"email": "Email", "shipping first name": "First Name", "
 df["TYPE"] = df["TYPE"].replace({"OMNIVORE": "OMNI", "Omnivor (Fleisch / Fisch)": "OMNI", "OMNIE": "OMNI", "Vegetarisch": "VG", "VEGGIE": "VG", "Vegan":"VEGAN"})
 
 # add specials
+df["DELIVERY DATE + INFOS"] = df["DELIVERY DATE + INFOS"].fillna('')
+
 idx  = (df["DELIVERY DATE + INFOS"].str.contains("Laktosefrei")) & (df["TYPE"] != "VEGAN")
 df["TYPE"][idx] = df["TYPE"][idx].astype(str)+" LF"
 
@@ -109,3 +111,4 @@ df.to_csv(week_path+'output.csv')
 # only selected columns
 df_min = df.loc[:,output_columns]
 df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'.csv', index=False)
+df_min
