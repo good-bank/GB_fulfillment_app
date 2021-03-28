@@ -2,10 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+from pathlib import Path
 import datetime
 import warnings
 warnings.filterwarnings('ignore')
-
+# disables jedi
+%config Completer.use_jedi = False
 
 ### methods ##########################################
 def rename_box_type(df, incol, outcol):
@@ -31,12 +33,12 @@ def rename_box_type(df, incol, outcol):
 
 ######################################################
 
-# disables jedi
-%config Completer.use_jedi = False
+
 print(os.getcwd())
 
 # setup (later automate)
-days = ["TUE", "WED", "THU", "FRI"]
+#days = ["TUE", "WED", "THU", "FRI"]
+days = ["TUE"]
 week = 8
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
@@ -65,12 +67,24 @@ for day in days:
     # for all days exclude people who ordered the box for upcoming days
     days = np.array(["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"])
     result = np.where(days == day_str)
-
     key = np.empty((df_new.shape[0]))
     for idx, i in enumerate(df_new["line_item_properties"]):
         key[idx] = any(ele in i for ele in days[0:result[0][0]+1])
     df_new=df_new.loc[key==1,:]
 
+    # check if data got saved with "LOCAL DELIVERY" and merge the two created lines
+    if df_new["product title"].isin(["LOCAL DELIVERY - BERLIN ONLY"]).any():
+        temp = np.array(df_new.loc[df_new["product title"].isin(["LOCAL DELIVERY - BERLIN ONLY"])]["recharge customer id"])
+        for id in temp:
+            idxs = np.where(df_new["recharge customer id"].isin([id]))[0]
+            print(idxs)
+            if len(idxs)>2:
+                print("In LOCAL DELIVERY, more than 2 lines of the same ID!")
+            else:
+                move_vars = ["product title", "variant title", "line_item_properties"]
+                for mv in move_vars:
+                    df_new[mv][idxs[0]] = df_new[mv][idxs[1]]
+                df_new = df_new.drop(index=idxs[1], axis=0)
 
     # if this is TUE (first day of the week, just take all orders in the file with delivery day up till this point)
     if day=="TUE":
@@ -147,4 +161,18 @@ for day in days:
     # keep only selected columns
     df_min = df.loc[:,output_columns]
     df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'.csv', index=False)
+
+    # only creates the manual file if it doesn't already exist
+    if not os.path.exists(week_path+'optimoroute_'+day+'_CW'+str(week)+'.csv'):
+        df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv', index=False)
+
+    # also, Laiza wanted to have a backup every time the script generates a new file
+    i = 0
+    cond = False
+    while not cond:
+        i += 1
+        if not os.path.exists(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_'+str(i)+'.csv'):
+            df_min.to_csv(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_'+str(i)+'.csv', index=False)
+            cond=True
+
     print("---END---")
