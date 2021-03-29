@@ -9,6 +9,7 @@ warnings.filterwarnings('ignore')
 # disables jedi
 %config Completer.use_jedi = False
 
+
 ### methods ##########################################
 def rename_box_type(df, incol, outcol):
     # re-code the box type variable item 33
@@ -39,7 +40,7 @@ print(os.getcwd())
 # setup (later automate)
 #days = ["TUE", "WED", "THU", "FRI"]
 days = ["TUE"]
-week = 8
+week = 13
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -163,7 +164,7 @@ for day in days:
     df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'.csv', index=False)
 
     # only creates the manual file if it doesn't already exist
-    if not os.path.exists(week_path+'optimoroute_'+day+'_CW'+str(week)+'.csv'):
+    if not os.path.exists(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv'):
         df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv', index=False)
 
     # also, Laiza wanted to have a backup every time the script generates a new file

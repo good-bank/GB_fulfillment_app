@@ -6,9 +6,9 @@ import os
 # disables jedi
 %config Completer.use_jedi = False
 print(os.getcwd())
-folder = os.getcwd()+'/data/2021/CW8/'
-file1 = 'Optimoroute_TUE_CW8.csv'
-file2 = 'optimoroute_TUE_CW8.csv'
+folder = os.getcwd()+'/data/2021/CW13/'
+file1 = 'optimoroute_TUE_CW13_man.csv'
+file2 = 'Optimoroute_TUE_CW13_Laiza.csv'
 # what to compare
 variable = 'Email'
 # what to show
