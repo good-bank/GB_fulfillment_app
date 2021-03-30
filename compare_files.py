@@ -7,8 +7,8 @@ import os
 %config Completer.use_jedi = False
 print(os.getcwd())
 folder = os.getcwd()+'/data/2021/CW13/'
-file1 = 'optimoroute_TUE_CW13_man.csv'
-file2 = 'Optimoroute_TUE_CW13_Laiza.csv'
+file1 = 'optimoroute_WED_CW13_man.csv'
+file2 = 'Optimoroute_WED_CW13_idiot.csv'
 # what to compare
 variable = 'Email'
 # what to show
