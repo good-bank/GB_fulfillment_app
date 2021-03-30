@@ -39,7 +39,7 @@ print(os.getcwd())
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU", "FRI"]
-days = ["TUE"]
+days = ["WED"]
 week = 13
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
@@ -68,6 +68,7 @@ for day in days:
     # for all days exclude people who ordered the box for upcoming days
     days = np.array(["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"])
     result = np.where(days == day_str)
+    df_new["line_item_properties"] = df_new["line_item_properties"].fillna('')
     key = np.empty((df_new.shape[0]))
     for idx, i in enumerate(df_new["line_item_properties"]):
         key[idx] = any(ele in i for ele in days[0:result[0][0]+1])
