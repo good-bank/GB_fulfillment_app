@@ -1,4 +1,4 @@
-import pandas as pd
+#!/usr/bin/python3
 import numpy as np
 import os
 import sys
@@ -39,10 +39,14 @@ print(os.getcwd())
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU", "FRI"]
-days = ["WED"]
-week = 13
+days = ["THU"]
+week = 9
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
+
+# if doesn't exist create extra files folder
+if not os.path.exists(week_path+'extra_files/'):
+    os.mkdir(week_path+'extra_files/')
 
 for day in days:
     print("---"+day+"---")
@@ -135,8 +139,12 @@ for day in days:
     if df["recharge customer id"].duplicated().any():
         print("Found duplicates by customer id:")
         print(df["recharge customer id"].loc[df["recharge customer id"].duplicated()])
+        dupids = df["recharge customer id"].loc[df["recharge customer id"].duplicated()]
+        df_dup = df.loc[df["recharge customer id"].isin(np.array(dupids)),:]
+
+        #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
         print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
-        df.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
+        df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
         print("Keeping first entry")
         df=df.drop_duplicates(subset=["recharge customer id"])
 
