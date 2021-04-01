@@ -39,7 +39,7 @@ print(os.getcwd())
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU", "FRI"]
-days = ["WED"]
+days = ["FRI"]
 week = 13
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
