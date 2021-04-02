@@ -1,4 +1,4 @@
-import pandas as pd
+#!/usr/bin/python3
 import numpy as np
 import os
 import sys
@@ -40,9 +40,13 @@ print(os.getcwd())
 # setup (later automate)
 #days = ["TUE", "WED", "THU", "FRI"]
 days = ["FRI"]
-week = 13
+week = 135
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
+
+# if doesn't exist create extra files folder
+if not os.path.exists(week_path+'extra_files/'):
+    os.mkdir(week_path+'extra_files/')
 
 for day in days:
     print("---"+day+"---")
@@ -135,8 +139,12 @@ for day in days:
     if df["recharge customer id"].duplicated().any():
         print("Found duplicates by customer id:")
         print(df["recharge customer id"].loc[df["recharge customer id"].duplicated()])
+        dupids = df["recharge customer id"].loc[df["recharge customer id"].duplicated()]
+        df_dup = df.loc[df["recharge customer id"].isin(np.array(dupids)),:]
+
+        #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
         print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
-        df.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
+        df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
         print("Keeping first entry")
         df=df.drop_duplicates(subset=["recharge customer id"])
 
@@ -145,15 +153,6 @@ for day in days:
     ############################################################
     # Filter and rename items
     output_columns = ["Email", "First Name", "Location name", "Address", "Notes", "ZIP", "PHONE", "TYPE", "DELIVERY DATE + INFOS"]
-
-    # item 27 - checking for local delivery in "product title"
-    # INSTRUCTION: Check for all "local delivery" rows as a duplicate to the Good Farm Box order rows.
-    # Copy here only the type of box of (column F) and line properties (column AQ) of the Good Farm Box
-    # order row to this one, and delete the Good Farm Box order row.
-    if df["product title"].isin(["local delivery"]).any():
-        print('There is a local delivery value, but the scirpt doesnt filter it yet')
-    else:
-        print("The script isn't equipped to deal with 'local delivery', check 'data/raw_merged_file.csv' if there is any and talk to Ondrej")
 
     # rename key headers and shave data frame off
     df = df.rename(columns={"email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
