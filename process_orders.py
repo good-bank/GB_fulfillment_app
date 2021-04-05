@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 import datetime
 import warnings
+from datetime import date, timedelta
 warnings.filterwarnings('ignore')
 # disables jedi
 %config Completer.use_jedi = False
@@ -124,7 +125,13 @@ for day in days:
     # read the "upcoming" file and select the upcoming date
     recurr_raw = pd.read_csv(week_path+'upcoming_'+day+'_CW'+str(week)+'.csv')
     recurr_raw["charge date"]=pd.to_datetime(recurr_raw["charge date"])
-    df_recurr = recurr_raw.loc[recurr_raw["charge date"]==today,:]
+
+    # on TUE also check if there are any orders charged on Monday, Sunday or Saturday
+    if day == "TUE":
+        predates = pd.date_range(today-timedelta(days=3), today,freq='d')
+        df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
+    else:
+        df_recurr = recurr_raw.loc[recurr_raw["charge date"]==today,:]
     df_recurr["type"] = "recurring"
     df_recurr = rename_box_type(df_recurr, "line item properties", "variant title")
 
@@ -137,6 +144,7 @@ for day in days:
     df["processed_on"] = day
     df["item sku"] = df["item sku"].fillna("")
     df["variant title"] = df["variant title"].fillna("")
+
     # check for duplicates
     # recharge customer id
     if df["recharge customer id"].duplicated().any():
@@ -156,7 +164,6 @@ for day in days:
         #df= df.loc[idx,:]
 
     # EXTRA ITEM
-
     id = df["recharge customer id"].loc[df["item sku"].isin(["extraitem"])]
     for i in id:
         sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
