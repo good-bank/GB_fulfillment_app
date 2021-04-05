@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import numpy as np
+import pandas as pd
 import os
 import sys
 from pathlib import Path
@@ -24,7 +25,7 @@ def rename_box_type(df, incol, outcol):
     idx  = (df[incol].str.contains("Glutenfrei"))
     df[outcol][idx] = df[outcol][idx].astype(str)+" GF"
 
-    idx  = (df[incol].str.contains("Ohne Schweinefleisch")) & (df[outcol] != "VEGAN") & (df[outcol] != "VG")
+    idx  = (df[incol].str.contains("Ohne Schweinefleisch") & (df[outcol] == "OMNI"))
     df[outcol][idx] = df[outcol][idx].astype(str)+" NP"
 
     # add 1st box
@@ -38,9 +39,9 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-#days = ["TUE", "WED", "THU", "FRI"]
-days = ["FRI"]
-week = 135
+days = ["TUE", "WED", "THU", "FRI"]
+#days = ["FRI"]
+week = 8
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -79,11 +80,11 @@ for day in days:
     df_new=df_new.loc[key==1,:]
 
     # check if data got saved with "LOCAL DELIVERY" and merge the two created lines
-    if df_new["product title"].isin(["LOCAL DELIVERY - BERLIN ONLY"]).any():
-        temp = np.array(df_new.loc[df_new["product title"].isin(["LOCAL DELIVERY - BERLIN ONLY"])]["recharge customer id"])
+    if df_new["product title"].str.contains("LOCAL DELIVERY").any():
+        print("LOCAL DELIVERY found - please check!")
+        temp = np.array(df_new.loc[df_new["product title"].str.contains("LOCAL DELIVERY")]["recharge customer id"])
         for id in temp:
             idxs = np.where(df_new["recharge customer id"].isin([id]))[0]
-            print(idxs)
             if len(idxs)>2:
                 print("In LOCAL DELIVERY, more than 2 lines of the same ID!")
             else:
@@ -94,7 +95,6 @@ for day in days:
 
     # if this is TUE (first day of the week, just take all orders in the file with delivery day up till this point)
     if day=="TUE":
-        df_new["processed_on"] = day
         df_new = rename_box_type(df_new, "line_item_properties", "variant title")
         df_new.to_csv(week_path+'collected_processed_until'+day+'_CW'+str(week)+'.csv', index=False)
         df_new.to_csv(week_path+'extra_files/collected_processed_only'+day+'_CW'+str(week)+'.csv', index=False)
@@ -111,7 +111,6 @@ for day in days:
         df_new.loc[:,~df_new.columns.str.contains('Unnamed', case=False)]
         df_new = df_new.loc[df_new["_merge"]=="left_only",:]
         df_new = df_new.drop(["_merge"], axis=1)
-        df_new["processed_on"] = day
         # rename box type
         df_new = rename_box_type(df_new, "line_item_properties", "variant title")
         df_new.to_csv(week_path+'extra_files/collected_processed_only'+day+'_CW'+str(week)+'.csv', index=False)
@@ -134,6 +133,8 @@ for day in days:
     df_new = df_new.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
     # merge data for new and recurring orders
     df = pd.concat([df_new, df_recurr]).reset_index()
+    df["processed_on"] = day
+
     # check for duplicates
     # recharge customer id
     if df["recharge customer id"].duplicated().any():
@@ -145,8 +146,31 @@ for day in days:
         #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
         print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
         df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
-        print("Keeping first entry")
-        df=df.drop_duplicates(subset=["recharge customer id"])
+        print("Keeping entry that says 1st box")
+        # in duplicates keep the one that has 1st box OR if it's "ExtraItem"
+        idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~df['variant title'].str.contains('(1st box)'))) | (df["item sku"].isin(["ExtraItem"]))
+        df= df.loc[idx,:]
+
+    # EXTRA ITEM
+    id = df["recharge customer id"].loc[df["item sku"].isin(["ExtraItem"])]
+    for i in id:
+        sz = df.loc[df["recharge customer id"].isin([i]),]
+        # number of extra items
+        noextra = sz.shape[0]-1
+
+        # append extra item
+        idd = ~df["item sku"].isin(["ExtraItem"]) & df["recharge customer id"].isin([i])
+        df["variant title"][idd] = df["variant title"][idd]+" + " +str(noextra)+ " EXTRA ITEM"
+
+        idd = df["item sku"].isin(["ExtraItem"]) & df["recharge customer id"].isin([i])
+        df["variant title"][idd] = "EXTRA ITEM"
+
+
+
+
+
+
+
 
 
 
@@ -158,6 +182,9 @@ for day in days:
     df = df.rename(columns={"email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
                                 "shipping address 1": "Address", "shipping address 2": "Notes", "shipping postal code": "ZIP",
                                 "shipping phone": "PHONE",  "variant title": "TYPE", "line item properties": "DELIVERY DATE + INFOS"})
+
+    # save full spreadsheet
+    df.to_csv(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_all_columns.csv', index=False)
 
     # keep only selected columns
     df_min = df.loc[:,output_columns]
