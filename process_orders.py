@@ -162,7 +162,7 @@ for day in days:
         sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
         # number of extra items
         noextra = sz.shape[0]
-        
+
         # append how many extra items
         idd = (~df["item sku"].isin(["extraitem"]) & df["recharge customer id"].isin([i])) & ~(df["variant title"].str.contains(" x EXTRA ITEM"))
         df["variant title"][idd] = df["variant title"][idd]+" + " +str(noextra)+ " x EXTRA ITEM(S)"
@@ -175,13 +175,9 @@ for day in days:
         idd = df["recharge customer id"].isin([i])
         df_extra = pd.concat([df_extra, df.loc[idd,:]]).reset_index().drop(columns=["level_0"])
 
-
-    df.to_csv(week_path+"test.csv")
-    df_extra.to_csv(week_path+"extra_test.csv")
-
-
-
-
+        # drop extra item from the main data
+        idd2 = df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"])
+        df=df.loc[~idd2,:]
 
 
 
@@ -205,6 +201,11 @@ for day in days:
     # only creates the manual file if it doesn't already exist
     if not os.path.exists(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv'):
         df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv', index=False)
+
+    # save extra items as separate sheet
+    df_extra= df_extra.loc[:,["charge date", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
+    df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+
 
     # also, Laiza wanted to have a backup every time the script generates a new file
     i = 0
