@@ -39,9 +39,9 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["TUE", "WED", "THU", "FRI"]
+days = ["TUE"]
 #days = ["FRI"]
-week = 8
+week = 14
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -131,10 +131,12 @@ for day in days:
     ### MERGE THE TWO PREPARED FILES
     # unify headers before merge (teh headers are similar but not the same - possible to change in the recharge system?)
     df_new = df_new.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
+
     # merge data for new and recurring orders
     df = pd.concat([df_new, df_recurr]).reset_index()
     df["processed_on"] = day
-
+    df["item sku"] = df["item sku"].fillna("")
+    df["variant title"] = df["variant title"].fillna("")
     # check for duplicates
     # recharge customer id
     if df["recharge customer id"].duplicated().any():
@@ -146,26 +148,36 @@ for day in days:
         #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
         print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
         df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
-        print("Keeping entry that says 1st box")
-        # in duplicates keep the one that has 1st box OR if it's "ExtraItem"
-        idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~df['variant title'].str.contains('(1st box)'))) | (df["item sku"].isin(["ExtraItem"]))
-        df= df.loc[idx,:]
+        #print("Keeping entry that says 1st box + any EXTRA items")
+        print("Keeping all duplicates - review manually!")
+        # in duplicates keep the one that has 1st box OR if it's "extraitem"
+
+        #idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~(df["variant title"].str.contains('(1st box)')))) | (df["item sku"].isin(["extraitem"]))
+        #df= df.loc[idx,:]
 
     # EXTRA ITEM
-    id = df["recharge customer id"].loc[df["item sku"].isin(["ExtraItem"])]
+
+    id = df["recharge customer id"].loc[df["item sku"].isin(["extraitem"])]
     for i in id:
-        sz = df.loc[df["recharge customer id"].isin([i]),]
+        sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
         # number of extra items
-        noextra = sz.shape[0]-1
+        noextra = sz.shape[0]
+        
+        # append how many extra items
+        idd = (~df["item sku"].isin(["extraitem"]) & df["recharge customer id"].isin([i])) & ~(df["variant title"].str.contains(" x EXTRA ITEM"))
+        df["variant title"][idd] = df["variant title"][idd]+" + " +str(noextra)+ " x EXTRA ITEM(S)"
+        df["variant title"][df["item sku"].isin(["extraitem"])] = "EXTRA ITEM"
 
-        # append extra item
-        idd = ~df["item sku"].isin(["ExtraItem"]) & df["recharge customer id"].isin([i])
-        df["variant title"][idd] = df["variant title"][idd]+" + " +str(noextra)+ " EXTRA ITEM"
+    # create a sheet of extra items
+    df_extra=pd.DataFrame()
+    extra_ids = id.unique()
+    for i in extra_ids:
+        idd = df["recharge customer id"].isin([i])
+        df_extra = pd.concat([df_extra, df.loc[idd,:]]).reset_index().drop(columns=["level_0"])
 
-        idd = df["item sku"].isin(["ExtraItem"]) & df["recharge customer id"].isin([i])
-        df["variant title"][idd] = "EXTRA ITEM"
 
-
+    df.to_csv(week_path+"test.csv")
+    df_extra.to_csv(week_path+"extra_test.csv")
 
 
 
