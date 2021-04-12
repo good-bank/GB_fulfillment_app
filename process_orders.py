@@ -78,7 +78,16 @@ for day in days:
     key = np.empty((df_new.shape[0]))
     for idx, i in enumerate(df_new["line_item_properties"]):
         key[idx] = any(ele in i for ele in days[0:result[0][0]+1])
+
+    # save the new orders expected through the rest of the week
+    df_expected=df_new.loc[key==0,:]
+    df_expected = rename_box_type(df_expected, "line_item_properties", "variant title")
+
+    # and now throw away the orders for next days
     df_new=df_new.loc[key==1,:]
+
+
+
 
     # check if data got saved with "LOCAL DELIVERY" and merge the two created lines
     if df_new["product title"].str.contains("LOCAL DELIVERY").any():
@@ -192,11 +201,12 @@ for day in days:
     ############################################################
     # Filter and rename items
     output_columns = ["Email", "First Name", "Location name", "Address", "Notes", "ZIP", "PHONE", "TYPE", "DELIVERY DATE + INFOS"]
+    rename_key = {"email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
+                                "shipping address 1": "Address", "shipping address 2": "Notes", "shipping postal code": "ZIP",
+                                "shipping phone": "PHONE",  "variant title": "TYPE", "line item properties": "DELIVERY DATE + INFOS"}
 
     # rename key headers and shave data frame off
-    df = df.rename(columns={"email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
-                                "shipping address 1": "Address", "shipping address 2": "Notes", "shipping postal code": "ZIP",
-                                "shipping phone": "PHONE",  "variant title": "TYPE", "line item properties": "DELIVERY DATE + INFOS"})
+    df = df.rename(columns=rename_key)
 
     # save full spreadsheet
     df.to_csv(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_all_columns.csv', index=False)
@@ -212,6 +222,12 @@ for day in days:
     # save extra items as separate sheet
     df_extra= df_extra.loc[:,["charge date", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
     df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+
+    # save NEW orders that are coming up in the upcoming days
+    df_expected = df_expected.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
+    df_expected = df_expected.rename(columns=rename_key)
+    df_expected = df_expected.loc[:,output_columns]
+    df_expected.to_csv(week_path+'collected_processed_upcoming_days_'+day+'_CW'+str(week)+'.csv', index=False)
 
 
     # also, Laiza wanted to have a backup every time the script generates a new file
