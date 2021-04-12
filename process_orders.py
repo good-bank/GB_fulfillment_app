@@ -73,6 +73,7 @@ for day in days:
 
     # for all days exclude people who ordered the box for upcoming days
     days = np.array(["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"])
+    days_eng =np.array(["MON", "TUE", "WED", "THU", "FRI"])
     result = np.where(days == day_str)
     df_new["line_item_properties"] = df_new["line_item_properties"].fillna('')
     key = np.empty((df_new.shape[0]))
@@ -103,15 +104,16 @@ for day in days:
                     df_new[mv][idxs[0]] = df_new[mv][idxs[1]]
                 df_new = df_new.drop(index=idxs[1], axis=0)
 
+
+
     # if this is TUE (first day of the week, just take all orders in the file with delivery day up till this point)
     if day=="TUE":
         df_new = rename_box_type(df_new, "line_item_properties", "variant title")
         df_new.to_csv(week_path+'collected_processed_until'+day+'_CW'+str(week)+'.csv', index=False)
         df_new.to_csv(week_path+'extra_files/collected_processed_only'+day+'_CW'+str(week)+'.csv', index=False)
-
+        df_till = df_new
     # if it's not TUE then load the previous day and check fo already completed orders
     else:
-        days_eng =np.array(["MON", "TUE", "WED", "THU", "FRI"])
         yesterday = np.where(days_eng==day)
         df_prev = pd.read_csv(week_path+'collected_processed_until'+days_eng[yesterday[0]-1][0]+'_CW'+str(week)+'.csv')
         # merge previous and new using indicator=True
@@ -222,12 +224,27 @@ for day in days:
     # save extra items as separate sheet
     df_extra= df_extra.loc[:,["charge date", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
     df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+    df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
+    df_extra_min = df_extra.loc[:,["name", "email", "product title"]]
+    df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
 
     # save NEW orders that are coming up in the upcoming days
+    # get orders till today
+    df_till = df_till.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
+    df_till.columns
+    df_till = df_till.rename(columns=rename_key)
+    #get new orders for upcoming days
     df_expected = df_expected.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
     df_expected = df_expected.rename(columns=rename_key)
-    df_expected = df_expected.loc[:,output_columns]
+    # merge the two
+    df_expected = pd.concat([df_expected.loc[:,output_columns], df_till.loc[:,output_columns]])
+    # polish the INFO column
+    for d, deng in zip(days,days_eng):
+        idx = df_expected["DELIVERY DATE + INFOS"].str.contains(d)
+        df_expected["DELIVERY DATE + INFOS"][idx] = deng
     df_expected.to_csv(week_path+'collected_processed_upcoming_days_'+day+'_CW'+str(week)+'.csv', index=False)
+
+
 
 
     # also, Laiza wanted to have a backup every time the script generates a new file
@@ -238,5 +255,18 @@ for day in days:
         if not os.path.exists(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_'+str(i)+'.csv'):
             df_min.to_csv(week_path+'extra_files/optimoroute_'+day+'_CW'+str(week)+'_'+str(i)+'.csv', index=False)
             cond=True
+
+    ## PRINT summary of a given day (optimoroute_summarized)
+    print("DAY: "+day)
+    # total counts
+    majtypes = ["VEGAN", "VG", "OMNI"]
+    for tp in majtypes:
+        print(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
+
+    # counts including specials
+    sdf = df_min.groupby(by=["TYPE"]).count()["Email"]
+    print(sdf)
+
+    print("")
 
     print("---END---")
