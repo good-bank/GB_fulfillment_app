@@ -10,10 +10,12 @@ from datetime import date, timedelta
 warnings.filterwarnings('ignore')
 # disables jedi
 %config Completer.use_jedi = False
-
+pd.set_option('precision', 0)
 
 ### methods ##########################################
 def rename_box_type(df, incol, outcol):
+
+
     # re-code the box type variable item 33
     df[outcol] = df[outcol].replace({"OMNIVORE": "OMNI", "Omnivor (Fleisch / Fisch)": "OMNI", "OMNIE": "OMNI", "Vegetarisch": "VG", "VEGGIE": "VG", "Vegan":"VEGAN"})
 
@@ -32,6 +34,7 @@ def rename_box_type(df, incol, outcol):
     # add 1st box
     idx = (df["type"] == "new")
     df[outcol][idx] = df[outcol][idx].astype(str)+" (1st box)"
+    df[outcol] = df["quantity"].astype('int').astype('str') + " " + df[outcol]
     return df
 
 ######################################################
@@ -40,9 +43,9 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["TUE"]
+days = ["TUE", "WED"]
 #days = ["FRI"]
-week = 14
+week = 15
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -179,12 +182,12 @@ for day in days:
     for i in id:
         sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
         # number of extra items
-        noextra = sz.shape[0]
+        noextra = sz["quantity"].sum()
 
         # append how many extra items
         idd = (~df["item sku"].isin(["extraitem"]) & df["recharge customer id"].isin([i])) & ~(df["variant title"].str.contains(" x EXTRA ITEM"))
-        df["variant title"][idd] = df["variant title"][idd]+" + " +str(noextra)+ " x EXTRA ITEM(S)"
-        df["variant title"][df["item sku"].isin(["extraitem"])] = "EXTRA ITEM"
+        df["variant title"][idd] = df["variant title"][idd]+" + " +str(int(noextra))+ " x EXTRA ITEM(S)"
+        df["variant title"][df["item sku"].isin(["extraitem"])] = df["quantity"].astype('int').astype('str') + " EXTRA ITEM"
 
     # create a sheet of extra items
     df_extra=pd.DataFrame()
@@ -223,10 +226,10 @@ for day in days:
         df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv', index=False)
 
     # save extra items as separate sheet
-    df_extra= df_extra.loc[:,["charge date", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
+    df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
     df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
     df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
-    df_extra_min = df_extra.loc[:,["name", "email", "product title"]]
+    df_extra_min = df_extra.loc[:,["name", "quantity", "email", "product title"]]
     df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
 
     # save NEW orders that are coming up in the upcoming days
