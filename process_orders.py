@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import os
+import re
 import sys
 from pathlib import Path
 import datetime
@@ -22,19 +23,22 @@ def rename_box_type(df, incol, outcol):
     # add specials
     df[incol] = df[incol].fillna('')
 
-    idx  = (df[incol].str.contains("Laktosefrei")) & (df[outcol] != "VEGAN")
-    df[outcol][idx] = df[outcol][idx].astype(str)+" LF"
-
     idx  = (df[incol].str.contains("Glutenfrei"))
     df[outcol][idx] = df[outcol][idx].astype(str)+" GF"
 
-    idx  = (df[incol].str.contains("Ohne Schweinefleisch") & (df[outcol] == "OMNI"))
+    idx  = ((df[incol].str.contains("Laktosefrei")) & ~(df[outcol].str.contains("VEGAN")))
+    df[outcol][idx] = df[outcol][idx].astype(str)+" LF"
+
+    idx  = (df[incol].str.contains("Ohne Schweinefleisch") & (df[outcol].str.contains("OMNI")))
     df[outcol][idx] = df[outcol][idx].astype(str)+" NP"
 
     # add 1st box
     idx = (df["type"] == "new")
     df[outcol][idx] = df[outcol][idx].astype(str)+" (1st box)"
-    df[outcol] = df["quantity"].astype('int').astype('str') + " " + df[outcol]
+
+    # when there are more than one box add the number of boxes to the front
+    idx = df["quantity"].astype('int') > 1
+    df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
 
 ######################################################
@@ -43,7 +47,7 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["TUE", "WED"]
+days = ["WED"]
 #days = ["FRI"]
 week = 15
 year = 2021
@@ -147,6 +151,8 @@ for day in days:
     else:
         df_recurr = recurr_raw.loc[recurr_raw["charge date"]==today,:]
     df_recurr["type"] = "recurring"
+    df_recurr["line item properties"] = df_recurr["line item properties"].fillna("")
+    df_recurr["variant title"] = df_recurr["variant title"].fillna("")
     df_recurr = rename_box_type(df_recurr, "line item properties", "variant title")
 
     ### MERGE THE TWO PREPARED FILES
@@ -264,12 +270,30 @@ for day in days:
     print("DAY: "+day)
     # total counts
     majtypes = ["VEGAN", "VG", "OMNI"]
-    for tp in majtypes:
-        print(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
 
     # counts including specials
-    sdf = df_min.groupby(by=["TYPE"]).count()["Email"]
-    print(sdf)
+    df_min["TYPE"] = df_min["TYPE"].str.replace(re.escape(" (1st box)"),"")
+    df_min["TYPE"] = df_min["TYPE"].str.split("+").str[0].str.rstrip(" ")
+    df_min["Number"] = df_min["Email"]
+    sdf = df_min.groupby(by=["TYPE"]).count()["Number"]
+    total_boxes = sdf.sum()
+    for tp in majtypes:
+        sdf = sdf.append(pd.Series(df_min["TYPE"].str.contains(tp).sum(), index=[tp+" TOTAL"]))
+        print(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
+    sdf =sdf.append(pd.Series(total_boxes, index=["TOTAL"]))
+    sdf.to_csv(week_path+'boxes_type_count_'+day+'_CW'+str(week)+'.csv')
+    #print(sdf)
+    import plotly.graph_objects as go
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(["Box Type (WK "+ str(week) + ", "+ day +")", "Number"]),
+                    fill_color='paleturquoise',
+                    align='left'),
+        cells=dict(values=[sdf.index, sdf],
+                   fill_color='lavender',
+                   align='left'))
+    ])
+
+    fig.show()
 
     print("")
 
