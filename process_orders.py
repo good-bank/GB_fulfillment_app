@@ -47,9 +47,9 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["WED"]
+days = ["TUE"]
 #days = ["FRI"]
-week = 15
+week = 16
 year = 2021
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
@@ -71,6 +71,21 @@ for day in days:
     new_raw = pd.read_csv(week_path+'processed_'+day+'_CW'+str(week)+'.csv')
     df_new = new_raw.loc[new_raw['charge type']=="Subscription First Order",:]
     df_new["type"] = "new"
+
+
+    # check if data got saved with "LOCAL DELIVERY" and merge the two created lines
+    if df_new["product title"].str.contains("LOCAL DELIVERY").any():
+        print("LOCAL DELIVERY found - please check!")
+        temp = np.array(df_new.loc[df_new["product title"].str.contains("LOCAL DELIVERY")]["recharge customer id"])
+        for id in temp:
+            idxs = np.where(df_new["recharge customer id"].isin([id]))[0]
+            if len(idxs)>2:
+                print("In LOCAL DELIVERY, more than 2 lines of the same ID!")
+            else:
+                move_vars = ["product title", "variant title", "line_item_properties"]
+                for mv in move_vars:
+                    df_new[mv][idxs[0]] = df_new[mv][idxs[1]]
+                df_new = df_new.drop(index=idxs[1], axis=0).reset_index(drop=True)
 
 
     # filter for current and past day in this week
@@ -97,19 +112,7 @@ for day in days:
 
 
 
-    # check if data got saved with "LOCAL DELIVERY" and merge the two created lines
-    if df_new["product title"].str.contains("LOCAL DELIVERY").any():
-        print("LOCAL DELIVERY found - please check!")
-        temp = np.array(df_new.loc[df_new["product title"].str.contains("LOCAL DELIVERY")]["recharge customer id"])
-        for id in temp:
-            idxs = np.where(df_new["recharge customer id"].isin([id]))[0]
-            if len(idxs)>2:
-                print("In LOCAL DELIVERY, more than 2 lines of the same ID!")
-            else:
-                move_vars = ["product title", "variant title", "line_item_properties"]
-                for mv in move_vars:
-                    df_new[mv][idxs[0]] = df_new[mv][idxs[1]]
-                df_new = df_new.drop(index=idxs[1], axis=0)
+
 
 
 
