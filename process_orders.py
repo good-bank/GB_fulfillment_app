@@ -51,6 +51,8 @@ days = ["TUE"]
 #days = ["FRI"]
 week = 16
 year = 2021
+# ignore this week
+ignore = ["NP", "LF"] # ["NP", "LF", "GF"]
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
 # if doesn't exist create extra files folder
@@ -108,12 +110,6 @@ for day in days:
 
     # and now throw away the orders for next days
     df_new=df_new.loc[key==1,:]
-
-
-
-
-
-
 
 
     # if this is TUE (first day of the week, just take all orders in the file with delivery day up till this point)
@@ -210,6 +206,10 @@ for day in days:
         df=df.loc[~idd2,:]
 
 
+    # remove types of boxes that are not featured this week
+    for ig in ignore:
+        idx = df["variant title"].str.contains(ig)
+        df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"") 
 
 
     ############################################################
