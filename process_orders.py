@@ -237,8 +237,8 @@ for day in days:
     # save extra items as separate sheet
     df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
     df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
-    df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
-    df_extra_min = df_extra.loc[:,["name", "quantity", "email", "product title"]]
+    #df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
+    df_extra_min = df_extra.loc[:,["shipping last name", "product title", "quantity", "email", "shipping first name"]]
     df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
 
     # save NEW orders that are coming up in the upcoming days
