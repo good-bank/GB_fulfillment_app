@@ -47,7 +47,7 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["TUE"]
+days = ["WED"]
 #days = ["FRI"]
 week = 16
 year = 2021
@@ -81,11 +81,13 @@ for day in days:
         temp = np.array(df_new.loc[df_new["product title"].str.contains("LOCAL DELIVERY")]["recharge customer id"])
         for id in temp:
             idxs = np.where(df_new["recharge customer id"].isin([id]))[0]
+            print(idxs)
             if len(idxs)>2:
                 print("In LOCAL DELIVERY, more than 2 lines of the same ID!")
             else:
                 move_vars = ["product title", "variant title", "line_item_properties"]
                 for mv in move_vars:
+                    df_new = df_new.reset_index(drop=True);
                     df_new[mv][idxs[0]] = df_new[mv][idxs[1]]
                 df_new = df_new.drop(index=idxs[1], axis=0).reset_index(drop=True)
 
@@ -209,7 +211,7 @@ for day in days:
     # remove types of boxes that are not featured this week
     for ig in ignore:
         idx = df["variant title"].str.contains(ig)
-        df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"") 
+        df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"")
 
 
     ############################################################
