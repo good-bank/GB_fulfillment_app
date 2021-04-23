@@ -14,7 +14,7 @@ from gb_lib import rename_box_type, process_day, get_table_download_link_csv
 
 ### settings
 st.sidebar.markdown('#### Select week, year and day')
-week = int(st.sidebar.number_input('Week number (e.g.: 16):', 16, format='%.0f'))
+week = int(st.sidebar.number_input('Week number (e.g.: 16):', format='%.0f'))
 year = st.sidebar.number_input('Year (e.g.: 2021):', 2021, format='%.0f')
 day = st.sidebar.selectbox('Select a day', ['TUE','WED','THU', 'FRI'])
 ignore = st.sidebar.multiselect('Which box type to not consider this week', ['NP', 'LF', 'GF'])
