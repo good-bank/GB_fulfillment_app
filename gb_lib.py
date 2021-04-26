@@ -13,7 +13,7 @@ import datetime as dt
 
 def get_table_download_link_csv(df, namestr):
     #csv = df.to_csv(index=False)
-    csv = df.to_csv().encode()
+    csv = df.to_csv(index=False).encode()
     #b64 = base64.b64encode(csv.encode()).decode()
     b64 = base64.b64encode(csv).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download="'+namestr+'.csv">Download '+ namestr +' file</a>'
@@ -289,7 +289,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 
 
 
-
-    return df, df_dup, df_min, df_extra, df_extra_min, df_expected, df_till
+    df_viz = df
+    return df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till
 
 ######################################################

@@ -36,29 +36,31 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
     #df = pd.read_csv(upl)
     #st.dataframe(df)
 
-    df, df_dup, df_min, df_extra, df_extra_min, df_expected, df_till = process_day(day, week, year, method="streamlit", ignore=ignore,  new_raw=processed, recurr_raw=upcoming, df_prev=coll_proc_until)
+    df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till = process_day(day, week, year, method="streamlit", ignore=ignore,  new_raw=processed, recurr_raw=upcoming, df_prev=coll_proc_until)
 
     ## PRINT summary of a given day (optimoroute_summarized)
     print("DAY: "+day)
     # total counts
+    # streamlit has a serious bug/feature here, if one assigns a DF ANYWHERE in codo to another df,
+    # and then makes changes, the MOTHER DF will also be changed
     majtypes = ["VEGAN", "VG", "OMNI"]
-
+    st.markdown(df_min.columns)
     # counts including specials
-    df_min["TYPE"] = df_min["TYPE"].str.replace(re.escape(" (1st box)"),"")
-    df_min["TYPE"] = df_min["TYPE"].str.split("+").str[0].str.rstrip(" ")
-    df_min["Number"] = df_min["Email"]
-    sdf = df_min.groupby(by=["TYPE"]).count()["Number"]
+    df_viz["TYPE"] = df_viz["TYPE"].str.replace(re.escape(" (1st box)"),"")
+    df_viz["TYPE"] = df_viz["TYPE"].str.split("+").str[0].str.rstrip(" ")
+    df_viz["Number"] = df_viz["Email"]
+    sdf = df_viz.groupby(by=["TYPE"]).count()["Number"]
     total_boxes = sdf.sum()
     for tp in majtypes:
-        sdf = sdf.append(pd.Series(df_min["TYPE"].str.contains(tp).sum(), index=[tp+" TOTAL"]))
-        #st.markdown(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
+            sdf = sdf.append(pd.Series(df_viz["TYPE"].str.contains(tp).sum(), index=[tp+" TOTAL"]))
+    st.markdown(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
     sdf =sdf.append(pd.Series(total_boxes, index=["TOTAL"]))
 
     import plotly.graph_objects as go
     fig = go.Figure(data=[go.Table(
         header=dict(values=list(["Box Type (WK "+ str(week) + ", "+ day +")", "Number"]),
                     fill_color='paleturquoise',
-                    align='left'),
+                    align='left'),#
         cells=dict(values=[sdf.index, sdf],
                    fill_color='lavender',
                    align='left'))
@@ -70,6 +72,7 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
+    st.markdown(df_min.columns)
     st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_till, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)

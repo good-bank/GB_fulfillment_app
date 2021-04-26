@@ -21,10 +21,10 @@ pd.set_option('precision', 0)
 # setup (later automate)
 #days = ["TUE", "WED", "THU"]
 days = ["TUE"]
-week = 16
+week = 17
 year = 2021
 # ignore this week
-ignore = ["NP", "LF"] # ["NP", "LF", "GF"]
+ignore = ["LF"] # ["NP", "LF", "GF"]
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
 # if doesn't exist create extra files folder
@@ -34,7 +34,7 @@ if not os.path.exists(week_path+'extra_files/'):
 print(os.getcwd())
 
 for day in days:
-    df, df_dup, df_min, df_extra, df_extra_min, df_expected, sdf = process_day(day, week, year, ignore=ignore)
+    df, df_dup, df_min, df_extra, df_extra_min, df_expected, sdf = process_day(day, week, year,  ignore=ignore)
 
 
     ## PRINT summary of a given day (optimoroute_summarized)
