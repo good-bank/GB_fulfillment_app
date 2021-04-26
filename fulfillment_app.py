@@ -44,7 +44,6 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
     # streamlit has a serious bug/feature here, if one assigns a DF ANYWHERE in codo to another df,
     # and then makes changes, the MOTHER DF will also be changed
     majtypes = ["VEGAN", "VG", "OMNI"]
-    st.markdown(df_min.columns)
     # counts including specials
     df_viz["TYPE"] = df_viz["TYPE"].str.replace(re.escape(" (1st box)"),"")
     df_viz["TYPE"] = df_viz["TYPE"].str.split("+").str[0].str.rstrip(" ")
@@ -72,7 +71,6 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
-    st.markdown(df_min.columns)
     st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_till, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)
