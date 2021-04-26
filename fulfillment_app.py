@@ -70,6 +70,6 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
-    st.markdown(get_table_download_link_csv(df, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
+    st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_till, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)
