@@ -68,7 +68,7 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
     st.markdown('**Duplicate entries**')
     st.dataframe(df_dup)
-    st.markdown(df_fornextday.columns)
+    
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
     st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
