@@ -52,7 +52,7 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
     total_boxes = sdf.sum()
     for tp in majtypes:
             sdf = sdf.append(pd.Series(df_viz["TYPE"].str.contains(tp).sum(), index=[tp+" TOTAL"]))
-    st.markdown(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
+            st.markdown(tp +" boxes: "+str(df_min["TYPE"].str.contains(tp).sum()))
     sdf =sdf.append(pd.Series(total_boxes, index=["TOTAL"]))
 
     import plotly.graph_objects as go
@@ -68,7 +68,7 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
     st.markdown('**Duplicate entries**')
     st.dataframe(df_dup)
-    
+
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
     st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
