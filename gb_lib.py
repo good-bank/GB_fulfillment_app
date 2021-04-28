@@ -117,6 +117,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
             df_new.to_csv(week_path+'collected_processed_until'+day+'_CW'+str(week)+'.csv', index=False)
             df_new.to_csv(week_path+'extra_files/collected_processed_only'+day+'_CW'+str(week)+'.csv', index=False)
         df_till = df_new
+        df_fornextday = df_new
     # if it's not TUE then load the previous day and check fo already completed orders
     else:
         yesterday = np.where(days_eng==day)
@@ -139,6 +140,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 
         # record all completed orders till now
         df_till = df_prev.append(df_new, ignore_index=True)
+        df_fornextday = df_till
         if method=="local":
             df_till.to_csv(week_path+'collected_processed_until'+day+'_CW'+str(week)+'.csv', index=False)
 
@@ -167,6 +169,8 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df_new = df_new.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
 
     # merge data for new and recurring orders
+    #print(df_new.columns)
+    #print(df_recurr.columns)
     df = pd.concat([df_new, df_recurr]).reset_index()
     df["processed_on"] = day
     df["item sku"] = df["item sku"].fillna("")
@@ -258,13 +262,12 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     # save NEW orders that are coming up in the upcoming days
     # get orders till today
     df_till = df_till.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
-    df_till.columns
-    df_till = df_till.rename(columns=rename_key)
+    #df_till.columns
     #get new orders for upcoming days
     df_expected = df_expected.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
     df_expected = df_expected.rename(columns=rename_key)
     # merge the two
-    df_expected = pd.concat([df_expected.loc[:,output_columns], df_till.loc[:,output_columns]])
+    df_expected = pd.concat([df_expected.loc[:,output_columns], df_till.rename(columns=rename_key).loc[:,output_columns]])
     # polish the INFO column
     for d, deng in zip(days,days_eng):
         idx = df_expected["DELIVERY DATE + INFOS"].str.contains(d)
@@ -290,6 +293,6 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 
 
     df_viz = df
-    return df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till
+    return df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till, df_fornextday
 
 ######################################################

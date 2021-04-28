@@ -36,7 +36,7 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
     #df = pd.read_csv(upl)
     #st.dataframe(df)
 
-    df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till = process_day(day, week, year, method="streamlit", ignore=ignore,  new_raw=processed, recurr_raw=upcoming, df_prev=coll_proc_until)
+    df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till, df_fornextday = process_day(day, week, year, method="streamlit", ignore=ignore,  new_raw=processed, recurr_raw=upcoming, df_prev=coll_proc_until)
 
     ## PRINT summary of a given day (optimoroute_summarized)
     print("DAY: "+day)
@@ -68,9 +68,9 @@ if (upcoming is not None) and (processed is not None) and (coll_proc_until is no
 
     st.markdown('**Duplicate entries**')
     st.dataframe(df_dup)
-
+    st.markdown(df_fornextday.columns)
 #dwnld = st.button('Download optimoroute')
 #if (dwnld):
     st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
-    st.markdown(get_table_download_link_csv(df_till, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)
+    st.markdown(get_table_download_link_csv(df_fornextday, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)
