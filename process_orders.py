@@ -47,9 +47,9 @@ def rename_box_type(df, incol, outcol):
 print(os.getcwd())
 
 # setup (later automate)
-days = ["WED"]
+days = ["TUE", "WED", "THU"]
 #days = ["FRI"]
-week = 16
+week = 18
 year = 2021
 # ignore this week
 ignore = ["NP", "LF"] # ["NP", "LF", "GF"]
@@ -186,6 +186,10 @@ for day in days:
 
     # EXTRA ITEM
     id = df["recharge customer id"].loc[df["item sku"].isin(["extraitem"])]
+    if len(id)==0:
+        extra_items = 0
+    else:
+        extra_items = 1
     for i in id:
         sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
         # number of extra items
@@ -198,6 +202,7 @@ for day in days:
 
     # create a sheet of extra items
     df_extra=pd.DataFrame()
+    df_extra_min=pd.DataFrame()
     extra_ids = id.unique()
     for i in extra_ids:
         idd = df["recharge customer id"].isin([i])
@@ -237,11 +242,12 @@ for day in days:
         df_min.to_csv(week_path+'optimoroute_'+day+'_CW'+str(week)+'_man.csv', index=False)
 
     # save extra items as separate sheet
-    df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
-    df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
-    #df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
-    df_extra_min = df_extra.loc[:,["shipping last name", "product title", "quantity", "email", "shipping first name"]]
-    df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
+    if extra_items == 1:
+        df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
+        df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+        #df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
+        df_extra_min = df_extra.loc[:,["shipping last name", "product title", "quantity", "email", "shipping first name"]]
+        df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
 
     # save NEW orders that are coming up in the upcoming days
     # get orders till today
