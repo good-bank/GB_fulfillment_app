@@ -8,6 +8,7 @@ sys.path.append(os.getcwd()+"scripts/")
 from pathlib import Path
 #from datetime import date, timedelta
 import datetime as dt
+import streamlit as st
 
 ### methods ##########################################
 
@@ -47,6 +48,60 @@ def rename_box_type(df, incol, outcol):
     idx = df["quantity"].astype('int') > 1
     df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
+
+def process_duplicates(day, week, df, method="local"):
+    # check for duplicates
+    # recharge customer id
+    df_dup = pd.DataFrame()
+    if df["recharge customer id"].duplicated().any():
+        print("Found duplicates by customer id:")
+        print(df["recharge customer id"].loc[df["recharge customer id"].duplicated()])
+        dupids = df["recharge customer id"].loc[df["recharge customer id"].duplicated()]
+        df_dup = df.loc[df["recharge customer id"].isin(np.array(dupids)),:]
+
+        #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
+        print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
+        if method=="local":
+            week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
+            df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
+        #print("Keeping entry that says 1st box + any EXTRA items")
+        print("Keeping all duplicates - review manually!")
+        # in duplicates keep the one that has 1st box OR if it's "extraitem"
+
+        #idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~(df["variant title"].str.contains('(1st box)')))) | (df["item sku"].isin(["extraitem"]))
+        #df= df.loc[idx,:]
+    return df, df_dup
+
+def process_extra_items(df):
+    # EXTRA ITEM
+    id = df["recharge customer id"].loc[df["item sku"].isin(["extraitem"])]
+    if len(id)==0:
+        extra_items = 0
+    else:
+        extra_items = 1
+    for i in id:
+        sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
+        # number of extra items
+        noextra = sz["quantity"].sum()
+
+        # append how many extra items
+        idd = (~df["item sku"].isin(["extraitem"]) & df["recharge customer id"].isin([i])) & ~(df["variant title"].str.contains(" x EXTRA ITEM"))
+        df["variant title"][idd] = df["variant title"][idd]+" + " +str(int(noextra))+ " x EXTRA ITEM(S)"
+        df["variant title"][df["item sku"].isin(["extraitem"])] = df["quantity"].astype('int').astype('str') + " EXTRA ITEM"
+
+    # create a sheet of extra items
+    df_extra=pd.DataFrame()
+    df_extra_min=pd.DataFrame()
+    extra_ids = id.unique()
+    for i in extra_ids:
+        idd = df["recharge customer id"].isin([i])
+        df_extra = pd.concat([df_extra, df.loc[idd,:]]).reset_index().drop(columns=["level_0"])
+
+        # drop extra item from the main data
+        idd2 = df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"])
+        df=df.loc[~idd2,:]
+    return df, df_extra, df_extra_min
+
 
 ### process_day ######################
 def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFrame(), recurr_raw=pd.DataFrame(), df_prev=pd.DataFrame()):
@@ -177,52 +232,10 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df["variant title"] = df["variant title"].fillna("")
 
     # check for duplicates
-    # recharge customer id
-    if df["recharge customer id"].duplicated().any():
-        print("Found duplicates by customer id:")
-        print(df["recharge customer id"].loc[df["recharge customer id"].duplicated()])
-        dupids = df["recharge customer id"].loc[df["recharge customer id"].duplicated()]
-        df_dup = df.loc[df["recharge customer id"].isin(np.array(dupids)),:]
+    df, df_dup = process_duplicates(day, week, df)
 
-        #df_dup = df.loc[df["recharge customer id"].isin([df["recharge customer id"].loc[df["recharge customer id"].duplicated()]),:]
-        print("Review to see duplicates:  extra_files/review_duplicates_"+day+"_CW"+str(week)+".csv")
-        if method=="local":
-            df_dup.to_csv(week_path+'extra_files/review_duplicates_'+day+'_CW'+str(week)+'.csv', index=False)
-        #print("Keeping entry that says 1st box + any EXTRA items")
-        print("Keeping all duplicates - review manually!")
-        # in duplicates keep the one that has 1st box OR if it's "extraitem"
-
-        #idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~(df["variant title"].str.contains('(1st box)')))) | (df["item sku"].isin(["extraitem"]))
-        #df= df.loc[idx,:]
-
-    # EXTRA ITEM
-    id = df["recharge customer id"].loc[df["item sku"].isin(["extraitem"])]
-    if len(id)==0:
-        extra_items = 0
-    else:
-        extra_items = 1
-    for i in id:
-        sz = df.loc[df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"]),]
-        # number of extra items
-        noextra = sz["quantity"].sum()
-
-        # append how many extra items
-        idd = (~df["item sku"].isin(["extraitem"]) & df["recharge customer id"].isin([i])) & ~(df["variant title"].str.contains(" x EXTRA ITEM"))
-        df["variant title"][idd] = df["variant title"][idd]+" + " +str(int(noextra))+ " x EXTRA ITEM(S)"
-        df["variant title"][df["item sku"].isin(["extraitem"])] = df["quantity"].astype('int').astype('str') + " EXTRA ITEM"
-
-    # create a sheet of extra items
-    df_extra=pd.DataFrame()
-    df_extra_min=pd.DataFrame()
-    extra_ids = id.unique()
-    for i in extra_ids:
-        idd = df["recharge customer id"].isin([i])
-        df_extra = pd.concat([df_extra, df.loc[idd,:]]).reset_index().drop(columns=["level_0"])
-
-        # drop extra item from the main data
-        idd2 = df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"])
-        df=df.loc[~idd2,:]
-
+    # check for extra items
+    df, df_extra, df_extra_min = process_extra_items(df)
 
     # remove types of boxes that are not featured this week
     for ig in ignore:
@@ -300,5 +313,62 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 
     df_viz = df
     return df, df_dup, df_min, df_viz, df_extra, df_extra_min, df_expected, df_till, df_fornextday
+
+def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(), recurr_raw=pd.DataFrame()):
+    if method=="local":
+            week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
+    today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w")
+    st.markdown('---')
+    st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
+    #predates = pd.date_range(today-dt.timedelta(days=3), today,freq='d')
+    #df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
+
+    # read NEW orders
+    if method=="local":
+        new_raw = pd.read_csv(week_path+'processed_week_CW'+str(week)+'.csv')
+    elif method=="streamlit":
+        new_raw = pd.read_csv(new_raw)
+    df_new = new_raw.loc[new_raw['charge type']=="Subscription First Order",:]
+    df_new = df_new.rename(columns={"charged date": "charge date", "total amount": "amount", "line_item_properties":"line item properties"})
+    df_new["type"] = "new"
+
+    # read recurring orders
+    if method=="local":
+        recurr_raw = pd.read_csv(week_path+'upcoming_week_CW'+str(week)+'.csv')
+    elif method=="streamlit":
+        recurr_raw = pd.read_csv(recurr_raw)
+    recurr_raw["type"] = "recurring"
+
+    # merge them
+    df = pd.concat([df_new, recurr_raw]).reset_index()
+    df["item sku"] = df["item sku"].fillna("")
+    df["variant title"] = df["variant title"].fillna("")
+    df["line item properties"] = df["line item properties"].fillna("")
+
+    # select dates used for analysis
+    predates = pd.Series(pd.date_range(today-dt.timedelta(days=6), today,freq='d')).apply(lambda x: x.strftime('%Y-%m-%d'))
+    df["charge date"]=pd.to_datetime(df["charge date"]).dt.strftime('%Y-%m-%d')
+    df = df.loc[df["charge date"].isin(predates),:]
+
+    # select ONLY the National orders in "product title"
+    df = df.loc[df["product title"].str.contains("National"),:]
+    df.to_csv(week_path+'test_filtered.csv', index=False)
+
+    # check for duplicates
+    df, df_dup = process_duplicates(day, week, df, method=method)
+
+    # check for extra items
+    df, df_extra, df_extra_min = process_extra_items(df)
+
+    # remove types of boxes that are not featured this week
+    for ig in ignore:
+        idx = df["variant title"].str.contains(ig)
+        df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"")
+
+    return df, df_extra, df_extra_min, df_dup
+
+
+
+
 
 ######################################################
