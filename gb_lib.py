@@ -249,7 +249,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     # remove types of boxes that are not featured this week
     for ig in ignore:
         idx = df["variant title"].str.contains(ig)
-        df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"")
+        df["variant title"][idx] = df["variant title"][idx].str.replace(" "+ig,"")
 
 
     ############################################################
