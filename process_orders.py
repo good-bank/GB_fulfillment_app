@@ -21,10 +21,10 @@ pd.set_option('precision', 0)
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU"]
-method = "weekly"
+method = "daily"
 
-days = ["THU"]
-week = 18
+days = ["TUE", "WED"]
+week = 19
 year = 2021
 # ignore this week
 ignore = ["LF"] # ["NP", "LF", "GF"]

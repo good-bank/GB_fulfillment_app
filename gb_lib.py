@@ -49,7 +49,7 @@ def rename_box_type(df, incol, outcol):
     df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
 
-def process_duplicates(day, week, df, method="local"):
+def process_duplicates(day, week, year, df, method="local"):
     # check for duplicates
     # recharge customer id
     df_dup = pd.DataFrame()
@@ -100,7 +100,7 @@ def process_extra_items(df):
         # drop extra item from the main data
         idd2 = df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"])
         df=df.loc[~idd2,:]
-    return df, df_extra, df_extra_min
+    return df, df_extra, df_extra_min, extra_items
 
 
 ### process_day ######################
@@ -164,6 +164,9 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     # and now throw away the orders for next days
     df_new=df_new.loc[key==1,:]
 
+    # remove national orders
+    idx = ~(df_new["product title"].str.contains("National"))
+    df_new = df_new.loc[idx,:]
 
     # if this is TUE (first day of the week, just take all orders in the file with delivery day up till this point)
     if day=="TUE":
@@ -217,6 +220,12 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df_recurr["type"] = "recurring"
     df_recurr["line item properties"] = df_recurr["line item properties"].fillna("")
     df_recurr["variant title"] = df_recurr["variant title"].fillna("")
+
+    # remove national orders
+    idx = ~(df_recurr["product title"].str.contains("National"))
+    df_recurr = df_recurr.loc[idx,:]
+
+    # rename bo type and shorten
     df_recurr = rename_box_type(df_recurr, "line item properties", "variant title")
 
     ### MERGE THE TWO PREPARED FILES
@@ -232,10 +241,10 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df["variant title"] = df["variant title"].fillna("")
 
     # check for duplicates
-    df, df_dup = process_duplicates(day, week, df)
+    df, df_dup = process_duplicates(day, week, year, df)
 
     # check for extra items
-    df, df_extra, df_extra_min = process_extra_items(df)
+    df, df_extra, df_extra_min, extra_items = process_extra_items(df)
 
     # remove types of boxes that are not featured this week
     for ig in ignore:
@@ -355,10 +364,10 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     df.to_csv(week_path+'test_filtered.csv', index=False)
 
     # check for duplicates
-    df, df_dup = process_duplicates(day, week, df, method=method)
+    df, df_dup = process_duplicates(day, week, year, df, method=method)
 
     # check for extra items
-    df, df_extra, df_extra_min = process_extra_items(df)
+    df, df_extra, df_extra_min, extra_items = process_extra_items(df)
 
     # remove types of boxes that are not featured this week
     for ig in ignore:

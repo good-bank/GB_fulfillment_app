@@ -13,7 +13,8 @@ from gb_lib import rename_box_type, process_day, process_week, get_table_downloa
 #from compare_files.py import process_day
 
 ### daily work vs weekly national box
-task = st.sidebar.radio('Select',['Regular (daily)', 'National orders (weekly)'])
+task = "Regular (daily)"
+#task = st.sidebar.radio('Select',['Regular (daily)', 'National orders (weekly)'])
 
 
 if task=="Regular (daily)":
