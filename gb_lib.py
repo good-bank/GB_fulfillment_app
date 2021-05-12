@@ -241,7 +241,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df["variant title"] = df["variant title"].fillna("")
 
     # check for duplicates
-    df, df_dup = process_duplicates(day, week, year, df)
+    df, df_dup = process_duplicates(day, week, year, df, method=method)
 
     # check for extra items
     df, df_extra, df_extra_min, extra_items = process_extra_items(df)

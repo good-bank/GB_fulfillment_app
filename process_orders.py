@@ -23,7 +23,7 @@ pd.set_option('precision', 0)
 #days = ["TUE", "WED", "THU"]
 method = "daily"
 
-days = ["TUE", "WED"]
+days = ["TUE", "WED", "THU"]
 week = 19
 year = 2021
 # ignore this week
