@@ -183,14 +183,18 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
             df_prev = pd.read_csv(week_path+'collected_processed_until'+days_eng[yesterday[0]-1][0]+'_CW'+str(week)+'.csv')
         elif method=="streamlit":
             df_prev = pd.read_csv(df_prev)
-        # merge previous and new using indicator=True    
-        df_new = df_new.merge(df_prev, on='external order number', how='outer', suffixes=['', '_extra'], indicator=True)
-        #df_new = df_new.merge(df_prev, on='shopify order number', how='outer', suffixes=['', '_extra'], indicator=True)
+        # merge previous and new using indicator=True
+        df_new.to_csv(week_path+'test1.csv', index=False)
+        df_prev.to_csv(week_path+'test2.csv', index=False)
+        if (df_prev.shape[0] is not 0) and (df_new.shape[0] is not 0):
+            df_new = df_new.merge(df_prev, on='external order number', how='outer', suffixes=['', '_extra'], indicator=True)
+            #df_new = df_new.merge(df_prev, on='shopify order number', how='outer', suffixes=['', '_extra'], indicator=True)
 
-        df_new = df_new.loc[:,~df_new.columns.str.contains('_extra', case=False)]
-        df_new.loc[:,~df_new.columns.str.contains('Unnamed', case=False)]
-        df_new = df_new.loc[df_new["_merge"]=="left_only",:]
-        df_new = df_new.drop(["_merge"], axis=1)
+            df_new = df_new.loc[:,~df_new.columns.str.contains('_extra', case=False)]
+            df_new.loc[:,~df_new.columns.str.contains('Unnamed', case=False)]
+            df_new = df_new.loc[df_new["_merge"]=="left_only",:]
+            df_new = df_new.drop(["_merge"], axis=1)
+
         # rename box type
         df_new = rename_box_type(df_new, "line_item_properties", "variant title")
         if method=="local":
