@@ -184,8 +184,6 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
         elif method=="streamlit":
             df_prev = pd.read_csv(df_prev)
         # merge previous and new using indicator=True
-        df_new.to_csv(week_path+'test1.csv', index=False)
-        df_prev.to_csv(week_path+'test2.csv', index=False)
         if (df_prev.shape[0] is not 0) and (df_new.shape[0] is not 0):
             df_new = df_new.merge(df_prev, on='external order number', how='outer', suffixes=['', '_extra'], indicator=True)
             #df_new = df_new.merge(df_prev, on='shopify order number', how='outer', suffixes=['', '_extra'], indicator=True)
