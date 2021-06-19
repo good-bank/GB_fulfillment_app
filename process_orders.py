@@ -14,7 +14,7 @@ from datetime import date, timedelta
 
 warnings.filterwarnings('ignore')
 # disables jedi
-%config Completer.use_jedi = False
+#%config Completer.use_jedi = False
 pd.set_option('precision', 0)
 
 
