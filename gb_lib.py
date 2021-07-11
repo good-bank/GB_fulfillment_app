@@ -49,7 +49,7 @@ def rename_box_type(df, incol, outcol):
     df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
 
-def process_duplicates(day, week, df, method="local"):
+def process_duplicates(day, week, year, df, method="local"):
     # check for duplicates
     # recharge customer id
     df_dup = pd.DataFrame()
@@ -100,7 +100,7 @@ def process_extra_items(df):
         # drop extra item from the main data
         idd2 = df["recharge customer id"].isin([i]) & df["item sku"].isin(["extraitem"])
         df=df.loc[~idd2,:]
-    return df, df_extra, df_extra_min
+    return df, df_extra, df_extra_min, extra_items
 
 
 ### process_day ######################
@@ -232,10 +232,10 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df["variant title"] = df["variant title"].fillna("")
 
     # check for duplicates
-    df, df_dup = process_duplicates(day, week, df)
+    df, df_dup = process_duplicates(day, week, year, df)
 
     # check for extra items
-    df, df_extra, df_extra_min = process_extra_items(df)
+    df, df_extra, df_extra_min, extra_items = process_extra_items(df)
 
     # remove types of boxes that are not featured this week
     for ig in ignore:
@@ -317,7 +317,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(), recurr_raw=pd.DataFrame()):
     if method=="local":
             week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
-    today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w")
+    today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w") #
     st.markdown('---')
     st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
     #predates = pd.date_range(today-dt.timedelta(days=3), today,freq='d')
@@ -325,7 +325,7 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
 
     # read NEW orders
     if method=="local":
-        new_raw = pd.read_csv(week_path+'processed_week_CW'+str(week)+'.csv')
+        new_raw = pd.read_csv(week_path+'processed_nationals_CW'+str(week)+'.csv') #processed_Nationals_CW27
     elif method=="streamlit":
         new_raw = pd.read_csv(new_raw)
     df_new = new_raw.loc[new_raw['charge type']=="Subscription First Order",:]
@@ -334,10 +334,16 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
 
     # read recurring orders
     if method=="local":
-        recurr_raw = pd.read_csv(week_path+'upcoming_week_CW'+str(week)+'.csv')
+        recurr_raw = pd.read_csv(week_path+'upcoming_nationals_CW'+str(week)+'.csv') #nationals upcoming TUE
     elif method=="streamlit":
         recurr_raw = pd.read_csv(recurr_raw)
     recurr_raw["type"] = "recurring"
+
+    # select dates used for analysis in recurring file (not sure if necessary, comment out for now)
+    #predates = pd.Series(pd.date_range(today-dt.timedelta(days=6), today,freq='d')).apply(lambda x: x.strftime('%Y-%m-%d'))
+    #recurr_raw["charge date"]=pd.to_datetime(recurr_raw["charge date"]).dt.strftime('%Y-%m-%d')
+    #recurr_raw = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
+
 
     # merge them
     df = pd.concat([df_new, recurr_raw]).reset_index()
@@ -345,27 +351,46 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     df["variant title"] = df["variant title"].fillna("")
     df["line item properties"] = df["line item properties"].fillna("")
 
-    # select dates used for analysis
-    predates = pd.Series(pd.date_range(today-dt.timedelta(days=6), today,freq='d')).apply(lambda x: x.strftime('%Y-%m-%d'))
-    df["charge date"]=pd.to_datetime(df["charge date"]).dt.strftime('%Y-%m-%d')
-    df = df.loc[df["charge date"].isin(predates),:]
+    # standardize box type
+    df = rename_box_type(df, "line item properties", "variant title")
+    df.to_csv(week_path+'test_merged.csv', index=False)
+
+    # check for extra items
+    df, df_extra, df_extra_min, extra_items = process_extra_items(df) #remove extra items from regular
 
     # select ONLY the National orders in "product title"
     df = df.loc[df["product title"].str.contains("National"),:]
+    national_ids = df["email"]
     df.to_csv(week_path+'test_filtered.csv', index=False)
 
-    # check for duplicates
-    df, df_dup = process_duplicates(day, week, df, method=method)
+    # filter extra items by nationals
+    df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
 
-    # check for extra items
-    df, df_extra, df_extra_min = process_extra_items(df)
+    #if there is a shipping company in upcoming/processed then in DPD it needs to be incl
+
+    # check for duplicates
+    df, df_dup = process_duplicates("nationals", week, year, df, method=method)
+
 
     # remove types of boxes that are not featured this week
     for ig in ignore:
         idx = df["variant title"].str.contains(ig)
         df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"")
 
-    return df, df_extra, df_extra_min, df_dup
+
+    # save extra items as separate sheet
+    if extra_items == 1:
+        day = "nationals"
+        #df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
+        if method=="local":
+            df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+        #df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
+        df_extra_min = df_extra.loc[:,["shipping last name", "product title", "quantity", "email", "shipping first name"]]
+        if method=="local":
+            df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
+
+    # match muster file
+    return df, df_extra, df_extra_min, df_dup, df_dpd
 
 
 
