@@ -430,9 +430,9 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
                    "Invoice date", 	"SPRN",	"EORI number (consignor)", "VAT ID (consignee)", "Remarks",
                    "WTNR",	"Item count",	"Length (cm)", "Width (cm)", "Height (cm)"]
     df_dpd = df_dpd.reindex(columns=cols_order)
-    df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
+    #df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
     if method=="local":
-        df.to_csv(week_path+'nationals_merged_CW'+str(week)+'.csv', index=False)
+        df.to_csv(week_path+'nationals_CW'+str(week)+'.csv', index=False)
 
 
     return df, df_extra, df_extra_min, df_dup, df_dpd

@@ -89,7 +89,10 @@ elif task=="National orders (weekly)":
     st.markdown('### Notice')
     st.markdown('The weekly script assumes that the processed days are from last Wednesday (Tue/Wed midnight) until Tuesday of the present week (time depends on when were the files generated). If you need it for another days, talk to Ondrej.')
     #if (upc_wk is not None) and (proc_wk is not None) :
-    df, df_extra, df_extra_min, df_dup = process_week(week, year, method="streamlit", ignore=ign_wk,  new_raw=proc_wk, recurr_raw=upc_wk)
+    df, df_extra, df_extra_min, df_dup, df_dpd = process_week(week, year, method="streamlit", ignore=ign_wk,  new_raw=proc_wk, recurr_raw=upc_wk)
+    st.markdown('**Duplicate entries**')
+    st.dataframe(df_dup)
+    st.markdown(get_table_download_link_csv(df_dpd, 'nationals_CW'+str(week)), unsafe_allow_html=True)
 
     #st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     #st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
