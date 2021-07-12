@@ -318,8 +318,8 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     if method=="local":
             week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
     today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w") #
-    st.markdown('---')
-    st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
+    #st.markdown('---')
+    #st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
     #predates = pd.date_range(today-dt.timedelta(days=3), today,freq='d')
     #df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
 
