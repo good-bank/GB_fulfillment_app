@@ -266,8 +266,8 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     ############################################################
     # Filter and rename items
     #output_columns = ["Email", "First Name", "Location name", "Address", "Notes", "ZIP", "PHONE", "TYPE", "DELIVERY DATE + INFOS"]
-    output_columns = ["Email", "First Name", "Location name", "Address", "Notes", "ZIP", "TYPE", "DELIVERY DATE + INFOS"]
-    rename_key = {"email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
+    output_columns = ["Email", "First Name", "Location name", "Address", "Company", "Notes", "ZIP", "TYPE", "DELIVERY DATE + INFOS"]
+    rename_key = { "shipping company":"Company", "email": "Email", "shipping first name": "First Name", "shipping last name": "Location name",
                                 "shipping address 1": "Address", "shipping address 2": "Notes", "shipping postal code": "ZIP",
                                 "shipping phone": "PHONE",  "variant title": "TYPE", "line item properties": "DELIVERY DATE + INFOS"}
 
