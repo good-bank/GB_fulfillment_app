@@ -91,7 +91,7 @@ elif task=="National orders (weekly)":
     st.markdown('The weekly script assumes that the processed days are from last Tuesday (Mon/Tue midnight) until Monday of the present week.')
     if (upc_wk is not None) and (proc_wk is not None) :
         df, df_extra, df_extra_min, df_dup, df_dpd = process_week(week, year, method="streamlit", ignore=ign_wk,  new_raw=proc_wk, recurr_raw=upc_wk)
-        st.markdown('**Duplicate entries**')
+        st.markdown('**Duplicate entries (in the DPD file, only the one from "processed" is kept)**')
         st.dataframe(df_dup)
         st.markdown(get_table_download_link_csv(df_dpd, 'DPD_nationals_CW'+str(week)), unsafe_allow_html=True)
 

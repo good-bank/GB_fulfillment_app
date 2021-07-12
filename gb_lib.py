@@ -49,7 +49,7 @@ def rename_box_type(df, incol, outcol):
     df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
 
-def process_duplicates(day, week, year, df, method="local"):
+def process_duplicates(day, week, year, df, method="local", policy="keep_duplicates"):
     # check for duplicates
     # recharge customer id
     df_dup = pd.DataFrame()
@@ -67,9 +67,9 @@ def process_duplicates(day, week, year, df, method="local"):
         #print("Keeping entry that says 1st box + any EXTRA items")
         print("Keeping all duplicates - review manually!")
         # in duplicates keep the one that has 1st box OR if it's "extraitem"
-
-        #idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~(df["variant title"].str.contains('(1st box)')))) | (df["item sku"].isin(["extraitem"]))
-        #df= df.loc[idx,:]
+        if policy=="keep_processed":
+            idx = (~(df["recharge customer id"].isin(np.array(dupids)) & ~(df["variant title"].str.contains('(1st box)')))) | (df["item sku"].isin(["extraitem"]))
+            df= df.loc[idx,:]
     return df, df_dup
 
 def process_extra_items(df):
@@ -379,7 +379,7 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     #if there is a shipping company in upcoming/processed then in DPD it needs to be incl
 
     # check for duplicates
-    df, df_dup = process_duplicates("nationals", week, year, df, method=method)
+    df, df_dup = process_duplicates("nationals", week, year, df, method=method, policy="keep_processed")
 
 
     # remove types of boxes that are not featured this week
