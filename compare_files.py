@@ -6,13 +6,13 @@ import os
 # disables jedi
 %config Completer.use_jedi = False
 print(os.getcwd())
-folder = os.getcwd()+'/data/2021/CW17/'
-file1 = 'optimoroute_TUE_CW17.csv'
-file2 = 'optimoroute_TUE_CW17_from_laiza.csv'
+folder = os.getcwd()+'/data/2021/CW25/'
+file1 = 'DPD_National_orders_CW25_example.csv'
+file2 = 'test_filtered.csv'
 # what to compare
 variable = 'Email'
 # what to show
-additional_show_vars = [ "First Name", "Location name"]
+additional_show_vars = []#[ "First Name", "Location name"]
 
 df1 = pd.read_csv(folder+file1)
 df2 = pd.read_csv(folder+file2)

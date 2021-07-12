@@ -353,7 +353,6 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
 
     # standardize box type
     df = rename_box_type(df, "line item properties", "variant title")
-    df.to_csv(week_path+'test_merged.csv', index=False)
 
     # check for extra items
     df, df_extra, df_extra_min, extra_items = process_extra_items(df) #remove extra items from regular
@@ -361,7 +360,6 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     # select ONLY the National orders in "product title"
     df = df.loc[df["product title"].str.contains("National"),:]
     national_ids = df["email"]
-    df.to_csv(week_path+'test_filtered.csv', index=False)
 
     # filter extra items by nationals
     df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
@@ -389,7 +387,54 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
         if method=="local":
             df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
 
-    # match muster file
+    # match DPD muster file
+    rename_key = {"shipping first name": "First name", "shipping last name": "Surname",
+                  "shipping postal code": "Postcode", "shipping city": "Town", "email": "Email", "billing address 2":"Address supplement",
+                  "variant title": "Order reference 2", "shipping address 1": "Address", "shipping company":"Company"}
+    output_columns = ["Company", "First name", "Surname", "Postcode", "Town", "Email", "Address supplement", "Order reference 2", "Address"]
+
+
+
+    df_dpd = pd.DataFrame()
+    df_dpd = df
+    df_dpd = df_dpd.rename(columns=rename_key)
+    df_dpd = df_dpd.loc[:,output_columns]
+
+    # split address
+    df_dpd[["Street", "add1", "add2"]] = df_dpd["Address"].str.split('(\d+)', expand=True, n=1)
+    df_dpd["House number"] = df_dpd["add1"] + df_dpd["add2"]
+    df_dpd = df_dpd.drop(columns=["add1", "add2", "Address"])
+    idx = df_dpd["House number"].isna()
+    df_dpd["House number"][idx] = df_dpd["Address supplement"][idx]
+    df_dpd["Address supplement"][idx] = ""
+
+
+    #add additional columns
+    df_dpd["Country"]="DEU"
+    df_dpd["Goods content"]="GOOD FARM BOX"
+    df_dpd["Order reference 1"]="GOOD FARM BOX"
+    df_dpd["Weight"]="7"
+    df_dpd["Supplementary services"] = "8192"
+    empty_columns = ["Salutation", "Default", "Telephone", "Federal state", "Product", "Parcel count shipment",	"Customs value",
+                 	"Currency",	"Terms of delivery", 	"Parcel type",	"Invoice number", 	"Invoice date", 	"SPRN",
+                    "EORI number (consignor)", 	"VAT ID (consignee)", 	"Remarks", 	"WTNR", 	"Item count",	"Length (cm)",
+                    "Width (cm)", 	"Height (cm)"]
+    for p in empty_columns:
+        df_dpd[p] = ""
+#    df_dpd[] = ""
+    cols_order = ["Salutation", "Company",	"First name",	"Surname",	"Country",	"Postcode",
+    	           "Town", 	"Street", "House number", "Order reference 1", 	"Telephone", 	"Email",
+                   "Address supplement",	"Federal state", "Goods content", 	"Weight",	"Default",
+                   "Order reference 2", 	"Product", 	"Supplementary services", 	"Parcel count shipment",
+                   "Customs value",	"Currency",	"Terms of delivery",	"Parcel type",	"Invoice number",
+                   "Invoice date", 	"SPRN",	"EORI number (consignor)", "VAT ID (consignee)", "Remarks",
+                   "WTNR",	"Item count",	"Length (cm)", "Width (cm)", "Height (cm)"]
+    df_dpd = df_dpd.reindex(columns=cols_order)
+    df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
+    if method=="local":
+        df.to_csv(week_path+'nationals_merged_CW'+str(week)+'.csv', index=False)
+
+
     return df, df_extra, df_extra_min, df_dup, df_dpd
 
 
