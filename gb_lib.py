@@ -329,15 +329,15 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(), recurr_raw=pd.DataFrame()):
     if method=="local":
             week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
-    today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w")
-    st.markdown('---')
-    st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
+    today = dt.datetime.strptime(str(year)+ '-W' + str(week) + '-2', "%Y-W%W-%w") #
+    #st.markdown('---')
+    #st.markdown('Generating data for dates: **'+(today-dt.timedelta(days=6)).strftime('%Y-%b-%d')+'** until **'+today.strftime('%Y-%b-%d')+'**')
     #predates = pd.date_range(today-dt.timedelta(days=3), today,freq='d')
     #df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
 
     # read NEW orders
     if method=="local":
-        new_raw = pd.read_csv(week_path+'processed_week_CW'+str(week)+'.csv')
+        new_raw = pd.read_csv(week_path+'processed_nationals_CW'+str(week)+'.csv') #processed_Nationals_CW27
     elif method=="streamlit":
         new_raw = pd.read_csv(new_raw)
     df_new = new_raw.loc[new_raw['charge type']=="Subscription First Order",:]
@@ -346,10 +346,16 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
 
     # read recurring orders
     if method=="local":
-        recurr_raw = pd.read_csv(week_path+'upcoming_week_CW'+str(week)+'.csv')
+        recurr_raw = pd.read_csv(week_path+'upcoming_nationals_CW'+str(week)+'.csv') #nationals upcoming TUE
     elif method=="streamlit":
         recurr_raw = pd.read_csv(recurr_raw)
     recurr_raw["type"] = "recurring"
+
+    # select dates used for analysis in recurring file (not sure if necessary, comment out for now)
+    #predates = pd.Series(pd.date_range(today-dt.timedelta(days=6), today,freq='d')).apply(lambda x: x.strftime('%Y-%m-%d'))
+    #recurr_raw["charge date"]=pd.to_datetime(recurr_raw["charge date"]).dt.strftime('%Y-%m-%d')
+    #recurr_raw = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
+
 
     # merge them
     df = pd.concat([df_new, recurr_raw]).reset_index()
@@ -357,27 +363,91 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     df["variant title"] = df["variant title"].fillna("")
     df["line item properties"] = df["line item properties"].fillna("")
 
-    # select dates used for analysis
-    predates = pd.Series(pd.date_range(today-dt.timedelta(days=6), today,freq='d')).apply(lambda x: x.strftime('%Y-%m-%d'))
-    df["charge date"]=pd.to_datetime(df["charge date"]).dt.strftime('%Y-%m-%d')
-    df = df.loc[df["charge date"].isin(predates),:]
+    # standardize box type
+    df = rename_box_type(df, "line item properties", "variant title")
+
+    # check for extra items
+    df, df_extra, df_extra_min, extra_items = process_extra_items(df) #remove extra items from regular
 
     # select ONLY the National orders in "product title"
     df = df.loc[df["product title"].str.contains("National"),:]
-    df.to_csv(week_path+'test_filtered.csv', index=False)
+    national_ids = df["email"]
+
+    # filter extra items by nationals
+    df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
+
+    #if there is a shipping company in upcoming/processed then in DPD it needs to be incl
 
     # check for duplicates
-    df, df_dup = process_duplicates(day, week, year, df, method=method)
+    df, df_dup = process_duplicates("nationals", week, year, df, method=method)
 
-    # check for extra items
-    df, df_extra, df_extra_min, extra_items = process_extra_items(df)
 
     # remove types of boxes that are not featured this week
     for ig in ignore:
         idx = df["variant title"].str.contains(ig)
         df["variant title"][idx] = df["variant title"][idx].str.replace(ig,"")
 
-    return df, df_extra, df_extra_min, df_dup
+
+    # save extra items as separate sheet
+    if extra_items == 1:
+        day = "nationals"
+        #df_extra= df_extra.loc[:,["charge date", "quantity", "shipping first name", "shipping last name", "email", "product title", "variant title"]]
+        if method=="local":
+            df_extra.to_csv(week_path+'extra_items_'+day+'_CW'+str(week)+'.csv', index=False)
+        #df_extra["name"] = df_extra["shipping first name"] + df_extra["shipping last name"]
+        df_extra_min = df_extra.loc[:,["shipping last name", "product title", "quantity", "email", "shipping first name"]]
+        if method=="local":
+            df_extra_min.to_csv(week_path+'extra_items_PRINTABLE_'+day+'_CW'+str(week)+'.csv', index=False)
+
+    # match DPD muster file
+    rename_key = {"shipping first name": "First name", "shipping last name": "Surname",
+                  "shipping postal code": "Postcode", "shipping city": "Town", "email": "Email", "billing address 2":"Address supplement",
+                  "variant title": "Order reference 2", "shipping address 1": "Address", "shipping company":"Company"}
+    output_columns = ["Company", "First name", "Surname", "Postcode", "Town", "Email", "Address supplement", "Order reference 2", "Address"]
+
+
+
+    df_dpd = pd.DataFrame()
+    df_dpd = df
+    df_dpd = df_dpd.rename(columns=rename_key)
+    df_dpd = df_dpd.loc[:,output_columns]
+
+    # split address
+    df_dpd[["Street", "add1", "add2"]] = df_dpd["Address"].str.split('(\d+)', expand=True, n=1)
+    df_dpd["House number"] = df_dpd["add1"] + df_dpd["add2"]
+    df_dpd = df_dpd.drop(columns=["add1", "add2", "Address"])
+    idx = df_dpd["House number"].isna()
+    df_dpd["House number"][idx] = df_dpd["Address supplement"][idx]
+    df_dpd["Address supplement"][idx] = ""
+
+
+    #add additional columns
+    df_dpd["Country"]="DEU"
+    df_dpd["Goods content"]="GOOD FARM BOX"
+    df_dpd["Order reference 1"]="GOOD FARM BOX"
+    df_dpd["Weight"]="7"
+    df_dpd["Supplementary services"] = "8192"
+    empty_columns = ["Salutation", "Default", "Telephone", "Federal state", "Product", "Parcel count shipment",	"Customs value",
+                 	"Currency",	"Terms of delivery", 	"Parcel type",	"Invoice number", 	"Invoice date", 	"SPRN",
+                    "EORI number (consignor)", 	"VAT ID (consignee)", 	"Remarks", 	"WTNR", 	"Item count",	"Length (cm)",
+                    "Width (cm)", 	"Height (cm)"]
+    for p in empty_columns:
+        df_dpd[p] = ""
+#    df_dpd[] = ""
+    cols_order = ["Salutation", "Company",	"First name",	"Surname",	"Country",	"Postcode",
+    	           "Town", 	"Street", "House number", "Order reference 1", 	"Telephone", 	"Email",
+                   "Address supplement",	"Federal state", "Goods content", 	"Weight",	"Default",
+                   "Order reference 2", 	"Product", 	"Supplementary services", 	"Parcel count shipment",
+                   "Customs value",	"Currency",	"Terms of delivery",	"Parcel type",	"Invoice number",
+                   "Invoice date", 	"SPRN",	"EORI number (consignor)", "VAT ID (consignee)", "Remarks",
+                   "WTNR",	"Item count",	"Length (cm)", "Width (cm)", "Height (cm)"]
+    df_dpd = df_dpd.reindex(columns=cols_order)
+    #df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
+    if method=="local":
+        df.to_csv(week_path+'nationals_CW'+str(week)+'.csv', index=False)
+
+
+    return df, df_extra, df_extra_min, df_dup, df_dpd
 
 
 

@@ -23,8 +23,8 @@ pd.set_option('precision', 0)
 #days = ["TUE", "WED", "THU"]
 method = "daily"
 
-days = [ "TUE", "WED"]
-week = 24
+days = ["THU"]
+week = 25
 year = 2021
 # ignore this week
 ignore = ["LF"] # ["NP", "LF", "GF"]
@@ -75,4 +75,4 @@ if method == "daily":
 
         print("---END---")
 elif method == "weekly":
-    df, df_extra, df_extra_min, df_dup = process_week(week, year, method="local", ignore=ignore)
+    df, df_extra, df_extra_min, df_dup, df_dpd = process_week(week, year, method="local", ignore=ignore)
