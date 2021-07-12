@@ -5,15 +5,7 @@ import base64
 import sys, os, re
 sys.path.append(os.getcwd()+"/scripts/")
 from gb_lib import rename_box_type, process_day, process_week, get_table_download_link_csv
-#sys.path.append(".")
-#import process_orders
-#import importlib
-#importlib.reload(process_orders)
-#from ut_methods import *
-#from compare_files.py import process_day
 
-### daily work vs weekly national box
-#task = "Regular (daily)"
 task = st.sidebar.radio('Select',['Regular (daily)', 'National orders (weekly)'])
 
 
@@ -94,6 +86,8 @@ elif task=="National orders (weekly)":
         st.markdown('**Duplicate entries (in the DPD file, only the one from "processed" is kept)**')
         st.dataframe(df_dup)
         st.markdown(get_table_download_link_csv(df_dpd, 'DPD_nationals_CW'+str(week)), unsafe_allow_html=True)
+        st.markdown(get_table_download_link_csv(df_extra_min, 'nationals_extra_items_PRINTABLE_CW'+str(week)), unsafe_allow_html=True)
+
 
     #st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     #st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)

@@ -384,8 +384,6 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     # filter extra items by nationals
     df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
 
-    #if there is a shipping company in upcoming/processed then in DPD it needs to be incl
-
     # check for duplicates
     df, df_dup = process_duplicates("nationals", week, year, df, method=method, policy="keep_processed")
 
