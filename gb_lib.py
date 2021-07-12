@@ -444,7 +444,7 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     df_dpd = df_dpd.reindex(columns=cols_order)
     #df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
     if method=="local":
-        df.to_csv(week_path+'nationals_CW'+str(week)+'.csv', index=False)
+        df.to_csv(week_path+'DPD_nationals_CW'+str(week)+'.csv', index=False)
 
 
     return df, df_extra, df_extra_min, df_dup, df_dpd

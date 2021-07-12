@@ -93,7 +93,7 @@ elif task=="National orders (weekly)":
         df, df_extra, df_extra_min, df_dup, df_dpd = process_week(week, year, method="streamlit", ignore=ign_wk,  new_raw=proc_wk, recurr_raw=upc_wk)
         st.markdown('**Duplicate entries**')
         st.dataframe(df_dup)
-        st.markdown(get_table_download_link_csv(df_dpd, 'nationals_CW'+str(week)), unsafe_allow_html=True)
+        st.markdown(get_table_download_link_csv(df_dpd, 'DPD_nationals_CW'+str(week)), unsafe_allow_html=True)
 
     #st.markdown(get_table_download_link_csv(df_min, 'optimoroute_'+day+'_CW'+str(week)), unsafe_allow_html=True)
     #st.markdown(get_table_download_link_csv(df_extra_min, 'extra_items_PRINTABLE_'+day+'_CW'+str(week)), unsafe_allow_html=True)
