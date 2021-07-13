@@ -250,11 +250,11 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df, df_extra, df_extra_min, extra_items = process_extra_items(df)
 
     # Extra items for nationals need to be excluded here
-    df = df.loc[~df["product title"].str.contains("National"),:]
-    nonnational_ids = df["email"]
+    #df = df.loc[~df["product title"].str.contains("National"),:]
+    #nonnational_ids = df["email"]
 
     # filter extra items by non-nationals
-    df_extra = df_extra.loc[df_extra["email"].isin(nonnational_ids),:]
+    #df_extra = df_extra.loc[df_extra["email"].isin(nonnational_ids),:]
 
 
     # remove types of boxes that are not featured this week
