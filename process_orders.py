@@ -21,13 +21,13 @@ pd.set_option('precision', 0)
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU"]
-method = "daily"
+method = "weekly"
 
 days = ["THU"]
-week = 25
+week = 28
 year = 2021
 # ignore this week
-ignore = ["LF"] # ["NP", "LF", "GF"]
+ignore = [] # ["NP", "LF", "GF"]
 week_path = 'data/'+str(year)+'/CW'+str(week)+'/'
 
 # if doesn't exist create extra files folder

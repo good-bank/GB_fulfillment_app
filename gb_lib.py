@@ -407,7 +407,7 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
 
     # match DPD muster file
     rename_key = {"shipping first name": "First name", "shipping last name": "Surname",
-                  "shipping postal code": "Postcode", "shipping city": "Town", "email": "Email", "billing address 2":"Address supplement",
+                  "shipping postal code": "Postcode", "shipping city": "Town", "email": "Email", "shipping address 2":"Address supplement",
                   "variant title": "Order reference 2", "shipping address 1": "Address", "shipping company":"Company"}
     output_columns = ["Company", "First name", "Surname", "Postcode", "Town", "Email", "Address supplement", "Order reference 2", "Address"]
 
