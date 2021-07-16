@@ -24,7 +24,7 @@ pd.set_option('precision', 0)
 method = "weekly"
 
 days = ["WED"]
-week = 27
+week = 28
 year = 2021
 # ignore this week
 ignore = [] # ["NP", "LF", "GF"]
@@ -76,3 +76,27 @@ if method == "daily":
         print("---END---")
 elif method == "weekly":
     df, df_extra, df_extra_min, df_dup, df_dpd = process_week(week, year, method="local", ignore=ignore)
+    majtypes = ["VEGAN", "VG", "OMNI"]
+
+    # counts including specials
+    df["variant title"] = df["variant title"].str.replace(re.escape(" (1st box)"),"")
+    df["variant title"] = df["variant title"].str.split("+").str[0].str.rstrip(" ")
+    df["Number"] = df["email"]
+    sdf = df.groupby(by=["variant title"]).count()["Number"]
+    total_boxes = sdf.sum()
+    for tp in majtypes:
+        sdf = sdf.append(pd.Series(df["variant title"].str.contains(tp).sum(), index=[tp+" TOTAL"]))
+        print(tp +" boxes: "+str(df["variant title"].str.contains(tp).sum()))
+    sdf =sdf.append(pd.Series(total_boxes, index=["TOTAL"]))
+
+    import plotly.graph_objects as go
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(["Nationals, Box Type (WK "+ str(week) +")", "Number"]),
+                    fill_color='paleturquoise',
+                    align='left'),
+        cells=dict(values=[sdf.index, sdf],
+                   fill_color='lavender',
+                   align='left'))
+    ])
+
+    fig.show()
