@@ -49,6 +49,12 @@ def rename_box_type(df, incol, outcol):
     df[outcol][idx] = df["quantity"][idx].astype('int').astype('str') + " " + df[outcol][idx]
     return df
 
+def simplify_box_names(df, outcol):
+    dct = {"OMNI": "OMNIVORE", "VG": "VEGGIE", "\(1st box\)": "", "x EXTRA ITEM\(S\)": ""}
+    for k, v in dct.items():
+        df[outcol] = df[outcol].str.replace(k, v)
+    return df
+
 def process_duplicates(day, week, year, df, method="local", policy="keep_duplicates"):
     # check for duplicates
     # recharge customer id
@@ -448,9 +454,12 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
                    "Invoice date", 	"SPRN",	"EORI number (consignor)", "VAT ID (consignee)", "Remarks",
                    "WTNR",	"Item count",	"Length (cm)", "Width (cm)", "Height (cm)"]
     df_dpd = df_dpd.reindex(columns=cols_order)
+
+    df_dpd = simplify_box_names(df_dpd, "Order reference 2")
+
     #df_dpd.to_csv(week_path+'test_filtered.csv', index=False)
     if method=="local":
-        df.to_csv(week_path+'DPD_nationals_CW'+str(week)+'.csv', index=False)
+        df_dpd.to_csv(week_path+'DPD_nationals_CW'+str(week)+'.csv', index=False)
 
 
     return df, df_extra, df_extra_min, df_dup, df_dpd
