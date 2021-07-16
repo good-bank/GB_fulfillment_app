@@ -21,9 +21,9 @@ pd.set_option('precision', 0)
 
 # setup (later automate)
 #days = ["TUE", "WED", "THU"]
-method = "weekly"
+method = "daily"
 
-days = ["THU"]
+days = ["WED"]
 week = 28
 year = 2021
 # ignore this week
