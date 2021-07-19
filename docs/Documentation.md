@@ -8,7 +8,7 @@ Documentation
 
 ---
 
-This document contains information about use of the Good Bank's "Fulfillment App". The app is designed to process raw input from Recharge and generate files compatible with Optimoroute route planner (Daily planning) and DPD shipping system (National orders).
+This document contains information about the use of the Good Bank's "Fulfillment App". The app is designed to process raw input from Recharge and generate files compatible with Optimoroute route planner (Daily planning) and DPD shipping system (National orders).
 Additionally, the system generates overview of extra items ordered (incl. "printable" version), duplicate entries, processed orders on previous days as well as a graphical breakdown of box types and their amounts.
 
 **Important:** The scripts are tailored to the specific naming conventions of the Recharge system on Shopify. Changes to naming of columns and content will likely result in incorrect behaviour. Any such changes should be flagged to the current maintainer of the system.
@@ -82,6 +82,8 @@ Collected Processed Untill Previous Day: `collected_processed_until<PREVIOUS DAY
 - rename columns to match Optimoroute template
 - if run locally (not streamlit) save all files, otherwise generate links and deploy on the website
 
+---
+
 #### b. National Orders
 
 
@@ -94,7 +96,7 @@ Collected Processed Untill Previous Day: `collected_processed_until<PREVIOUS DAY
 **Input**
 `Week number`
 `Year`
-`Box type exclusion` - some weeks don't have pork (NP), glutenfrei (GF) or laktosefrei (LF), this can be indicated so that labels don't include redundant information
+`Box type exclusion` - on some weeks the box planning does not require to identify no pork (NP), glutenfrei (GF) or laktosefrei (LF) boxes. The exclusion function allows to avoid redundant information
 `Processed Nationals` - contains new orders
 `Upcoming Nationals` - contains recurring orders
 
@@ -105,7 +107,7 @@ Upcoming: `upcoming_nationals_CW<WEEK NUMBER>.csv`
 **Output**
 - `DPD` file with processed and fotmatted data
 - `Extra items for Nationals` printable version
-- duplicates - here if there is a duplicate, only the entry from "processed" is kept
+- duplicates (just for a quick check, if the same order occurs in both processed and upcoming then the system **keeps both** and one needs to be removed manually, this can be easily adjusted to only keep one by changing the input parameter `policy` to "keep_processed" - talk to dev if desired)
 
 ##### Under the hood
 **Processed**
@@ -120,10 +122,10 @@ Upcoming: `upcoming_nationals_CW<WEEK NUMBER>.csv`
 - load file
 
 **After merge**
-- rename box type (VEGGIE -> VG, add extra items count, etc)
+- rename box type (e.g VEGGIE -> VG; add extra items count, etc)
 - process extra items and generate report
 - remove extra items for local orders
 - check for duplicates and report
-- extract address and house number (some people add it to column `shipping address 2`)
+- extract address and house number (the DPD master file requires house numbers in a separate column)
 - create DPD file based on template
 - rename box types for DPD labels (only VEGGIE/VEGAN/OMNIVORE)

@@ -6,13 +6,17 @@ import sys, os, re
 sys.path.append(os.getcwd()+"/scripts/")
 from gb_lib import rename_box_type, process_day, process_week, get_table_download_link_csv
 
+import datetime
+my_date = datetime.date.today()
+year, week_num, day_of_week = my_date.isocalendar()
+
 task = st.sidebar.radio('Select',['Regular (daily)', 'National orders (weekly)'])
 
 
 if task=="Regular (daily)":
     ### settings
     st.sidebar.markdown('#### Select week, year and day')
-    week = int(st.sidebar.number_input('Week number (e.g.: 16):', format='%.0f'))
+    week = int(st.sidebar.number_input('Week number (e.g.: 16):',week_num, format='%.0f'))
     year = st.sidebar.number_input('Year (e.g.: 2021):', 2021, format='%.0f')
     day = st.sidebar.selectbox('Select a day', ['TUE','WED','THU', 'FRI'])
     ignore = st.sidebar.multiselect('Which box type to not consider this week', ['NP', 'LF', 'GF'])
@@ -74,7 +78,7 @@ if task=="Regular (daily)":
         st.markdown(get_table_download_link_csv(df_fornextday, 'collected_processed_until'+day+'_CW'+str(week)), unsafe_allow_html=True)
 
 elif task=="National orders (weekly)":
-    week = int(st.sidebar.number_input('This week number (e.g.: 16):', format='%.0f'))
+    week = int(st.sidebar.number_input('This week number (e.g.: 16):',week_num, format='%.0f'))
     year = st.sidebar.number_input('Year (e.g.: 2021):', 2021, format='%.0f')
     ign_wk = st.sidebar.multiselect('Which box type to not consider this week', ['NP', 'LF', 'GF'])
     upc_wk = st.sidebar.file_uploader("Select \"upcoming_nationals_\" since last Wednesday")
