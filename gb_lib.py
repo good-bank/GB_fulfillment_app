@@ -261,6 +261,7 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
 
     # filter extra items by non-nationals
     if extra_items != 0:
+        print(df_extra)
         df_extra = df_extra.loc[df_extra["email"].isin(nonnational_ids),:]
 
 
