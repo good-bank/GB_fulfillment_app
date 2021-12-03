@@ -18,7 +18,7 @@ if task=="Regular (daily)":
     st.sidebar.markdown('#### Select week, year and day')
     week = int(st.sidebar.number_input('Week number (e.g.: 16):',week_num, format='%.0f'))
     year = st.sidebar.number_input('Year (e.g.: 2021):', 2021, format='%.0f')
-    day = st.sidebar.selectbox('Select a day', ['TUE','WED']#,'THU', 'FRI'])
+    day = st.sidebar.selectbox('Select a day', ['TUE','WED'])#,'THU', 'FRI'])
     ignore = st.sidebar.multiselect('Which box type to not consider this week', ['NP', 'LF', 'GF'])
     st.sidebar.markdown('---')
 
