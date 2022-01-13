@@ -224,8 +224,14 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     if day == "TUE":
         predates = pd.date_range(today-dt.timedelta(days=3), today,freq='d')
         df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(predates),:]
-    else:
-        df_recurr = recurr_raw.loc[recurr_raw["charge date"]==today,:]
+    #else: 
+    #    df_recurr = recurr_raw.loc[recurr_raw["charge date"]==today,:]
+    # Above is the old code from when WED, THU, FRI were available options. 
+    # Currently, only WED is available, so WED must search for orders
+    # charged also on THU and FRI
+    elif day == "WED":
+        posdates = pd.date_range(today,today+dt.timedelta(days=2),freq='d')
+        df_recurr = recurr_raw.loc[recurr_raw["charge date"].isin(posdates),:]
     df_recurr["type"] = "recurring"
     df_recurr["line item properties"] = df_recurr["line item properties"].fillna("")
     df_recurr["variant title"] = df_recurr["variant title"].fillna("")
