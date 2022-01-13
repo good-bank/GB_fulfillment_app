@@ -168,8 +168,9 @@ def process_day(day, week, year, method="local", ignore=[],  new_raw=pd.DataFram
     df_expected = rename_box_type(df_expected, "line_item_properties", "variant title")
 
     # and now throw away the orders for next days
-    df_new=df_new.loc[key==1,:]
-
+    # df_new=df_new.loc[key==1,:]
+    # HACKY FIX TO AVOID PROBLEMS WITH NEW PRODUCTION PLAN
+    
     # remove national orders
     idx = ~(df_new["product title"].str.contains("National"))
     df_new = df_new.loc[idx,:]
