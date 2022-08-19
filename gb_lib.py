@@ -397,7 +397,8 @@ def process_week(week, year, method="local", ignore=[],  new_raw=pd.DataFrame(),
     national_ids = df["email"]
 
     # filter extra items by nationals
-    df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
+    if len(df_extra) != 0:
+        df_extra = df_extra.loc[df_extra["email"].isin(national_ids),:]
 
     # check for duplicates
     df, df_dup = process_duplicates("nationals", week, year, df, method=method)
